@@ -1,7 +1,15 @@
 goto
 ====
 
-A minimal and fast CM tool.
+Goto considered harmless!
 
-Basically, faster Ansible with own opinionated syntax (yes, goodbye yaml).
+Goto - a minimal and fast CM tool.
 
+Basically, faster Ansible, with own opinionated syntax (yes, goodbye yaml)
+and several different architectural decisions.
+
+Have I mentioned minimal? Yes, very much.
+
+All written in Go.
+
+And with a cool name.
