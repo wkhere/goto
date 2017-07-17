@@ -3,4 +3,5 @@ goto
 
 A minimal and fast CM tool.
 
-Basically, faster Ansible.
+Basically, faster Ansible with own opinionated syntax (yes, goodbye yaml).
+
