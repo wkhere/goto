@@ -1,0 +1,4 @@
+Allow dry-run mode.
+
+Every task must be able to run in dry-run mode. 
+What about raw scripts?
