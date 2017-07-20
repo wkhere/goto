@@ -13,3 +13,7 @@ Very fast state gathering.
 Mind you, esp. *not* using ansible's "facts gathering" term,
 because of the artificial difference between os-wide facts
 and task-scoped state.
+
+
+`blockinfile` equivalent - here I can use sth like block_regexp
+option so that really we can substitute a block in one pass.
