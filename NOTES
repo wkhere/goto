@@ -17,3 +17,7 @@ and task-scoped state.
 
 `blockinfile` equivalent - here I can use sth like block_regexp
 option so that really we can substitute a block in one pass.
+
+
+Ansible's static/dynamic include mess - don't copy that.
+
