@@ -22,3 +22,8 @@ option so that really we can substitute a block in one pass.
 
 Ansible's static/dynamic include mess - don't copy that.
 
+
+By default work aroung Linux inconsistencies
+(like, service names: ntp/ntpd, ssh/sshd, apache2/httpd
+ on ubuntu/centos)
+
