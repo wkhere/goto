@@ -1,4 +1,15 @@
+Idempotent tasks.
+
+Task can be simply Go structures. Compileable by Go. Good start.
+
+
 Allow dry-run mode.
 
 Every task must be able to run in dry-run mode. 
 What about raw scripts?
+
+
+Very fast state gathering.
+Mind you, esp. *not* using ansible's "facts gathering" term,
+because of the artificial difference between os-wide facts
+and task-scoped state.
