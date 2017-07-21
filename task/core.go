@@ -1,5 +1,5 @@
 package task
 
 type Task interface {
-	Apply(options interface{}) (changed bool, err error)
+	Apply() (changed bool, err error)
 }
