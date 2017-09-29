@@ -1,7 +1,12 @@
+Domain idea: gotocm.io
+
+
+Tasks can be simply Go structures. Compileable by Go. Good start.
+Or a special language, but then compiled before sending.
+Requires task writer to have Go installation anyway.
+
+
 Idempotent tasks.
-
-Task can be simply Go structures. Compileable by Go. Good start.
-
 
 Allow dry-run mode.
 Allow dry-run-only permission for specific user/machine (like, production).
