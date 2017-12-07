@@ -27,7 +27,7 @@ tasks - line: lineinfile, blockinfile ..etc.
 Ansible's static/dynamic include mess - don't copy that.
 
 
-By default work aroung Linux inconsistencies
+By default work around Linux inconsistencies
 (like, service names: ntp/ntpd, ssh/sshd, apache2/httpd
  on ubuntu/centos)
 
