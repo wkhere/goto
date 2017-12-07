@@ -11,13 +11,13 @@ What about raw scripts?
 
 
 Very fast state gathering.
-Mind you, esp. *not* using ansible's "facts gathering" term,
+Btw using ansible's "facts gathering" term is so confusing,
 because of the artificial difference between os-wide facts
 and task-scoped state.
 
 
-`blockinfile` equivalent - here I can use sth like block_regexp
-option so that really we can substitute a block in one pass.
+`blockinfile` equivalent - here I want to use sth like block_regexp
+option so that we really can substitute a block in one pass.
 
 
 Provide "diff-control" not only for template but for all file-modifying
