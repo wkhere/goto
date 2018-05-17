@@ -1,5 +1,6 @@
 package task
 
 type Task interface {
-	Apply() (changed bool, err error)
+	Query() (changed bool, diff string, err error)
+	Apply() (changed bool, diff string, err error)
 }
