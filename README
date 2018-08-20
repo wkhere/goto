@@ -5,8 +5,8 @@ Goto considered harmless!
 
 Goto - a minimal and fast CM tool.
 
-Basically, faster Ansible, with own opinionated syntax (yes, goodbye yaml)
-and several different architectural decisions.
+Basically, simplified and faster Ansible, with own opinionated syntax (yes,
+goodbye yaml) and several different architectural decisions.
 
 Have I mentioned minimal? Yes, very much.
 
