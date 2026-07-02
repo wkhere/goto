@@ -1,38 +1,25 @@
-Domain idea: gotocm.io
+Tasks can be simply Go structures. Put the tasks as code in the `agent` dir,
+plus a simple main.go,
+`goto` command should cd to this and compile the agent with ldflags=-s,
+then send & run the agent.
 
 
-Tasks can be simply Go structures. Compileable by Go. Good start.
-Or a special language, but then compiled before sending.
-Requires task writer to have Go installation anyway.
-
-
-Idempotent tasks.
-
-Allow dry-run mode.
+Dry-run mode is needed for all tasks.
 Allow dry-run-only permission for specific user/machine (like, production).
 
-Every task must be able to run in dry-run mode. 
-What about raw scripts?
+Start with tasks:
+* Template
+* Binary
+* Service
 
 
-Very fast state gathering.
-Btw using ansible's "facts gathering" term is so confusing,
-because of the artificial difference between os-wide facts
-and task-scoped state.
-
-
-`blockinfile` equivalent - here I want to use sth like block_regexp
-option so that we really can substitute a block in one pass.
-
-
-Provide "diff-control" not only for template but for all file-modifying
-tasks - line: lineinfile, blockinfile ..etc.
-
-
-Ansible's static/dynamic include mess - don't copy that.
+Do not mimic ansible. Though, equivalents for some functionality would be good
+(blockinfile ..etc).
 
 
 By default work around Linux inconsistencies
 (like, service names: ntp/ntpd, ssh/sshd, apache2/httpd
- on ubuntu/centos)
+ on ubuntu/centos).
 
+
+Domain idea: gotocm.io
