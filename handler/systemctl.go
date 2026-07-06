@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"strings"
 	"fmt"
 	"os/exec"
+	"strings"
 )
 
 type SystemctlRestart struct{ Service string }

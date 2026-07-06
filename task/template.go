@@ -70,7 +70,7 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 	}
 
 	var newContent string
-	err = t.evalTo(&newContent, newFile, vars )
+	err = t.evalTo(&newContent, newFile, vars)
 	if err != nil {
 		newFile.Close()
 		return false, "", nil, fmt.Errorf("eval new content: %w", err)
@@ -107,7 +107,7 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 
 func (t *Template) guessSize() int { return ((len(t.Content)+100)/4096 + 1) * 4096 }
 
-func (t *Template) evalTo(p *string, tee io.Writer, vars core.Vars  ) error {
+func (t *Template) evalTo(p *string, tee io.Writer, vars core.Vars) error {
 	llt, err := template.New(t.SourceName).Parse(t.Content)
 	if err != nil {
 		return err
