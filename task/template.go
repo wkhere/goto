@@ -28,17 +28,18 @@ func (t *Template) View(vars core.Vars) (changed bool, diff string,
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
 	}
 
-	oldContent, _, err := readToBuf(dest)
+	oldContent, _, err := readFile(dest)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("read dest: %w", err)
 	}
 
-	newContent, err := t.evalToBuf(vars, nil)
+	var newContent string
+	err = t.evalTo(&newContent, nil, vars)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("eval new content: %w", err)
 	}
 
-	diff = textdiff.Unified(dest, dest+"-new", oldContent.String(), newContent.String())
+	diff = textdiff.Unified(dest, dest+"-new", oldContent, newContent)
 	changed = len(diff) > 0
 	if changed {
 		notify = t.Notifier
@@ -54,7 +55,7 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
 	}
 
-	oldContent, fileMode, err := readToBuf(dest)
+	oldContent, fileMode, err := readFile(dest)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("read dest: %w", err)
 	}
@@ -68,13 +69,14 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 		return false, "", nil, fmt.Errorf("create tmp file: %w", err)
 	}
 
-	newContent, err := t.evalToBuf(vars, newFile)
+	var newContent string
+	err = t.evalTo(&newContent, newFile, vars )
 	if err != nil {
 		newFile.Close()
 		return false, "", nil, fmt.Errorf("eval new content: %w", err)
 	}
 
-	diff = textdiff.Unified(dest, dest+"-new", oldContent.String(), newContent.String())
+	diff = textdiff.Unified(dest, dest+"-new", oldContent, newContent)
 	changed = len(diff) > 0
 
 	err = newFile.Close()
@@ -105,10 +107,10 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 
 func (t *Template) guessSize() int { return ((len(t.Content)+100)/4096 + 1) * 4096 }
 
-func (t *Template) evalToBuf(vars core.Vars, tee io.Writer) (*strings.Builder, error) {
+func (t *Template) evalTo(p *string, tee io.Writer, vars core.Vars  ) error {
 	llt, err := template.New(t.SourceName).Parse(t.Content)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	b := new(strings.Builder)
@@ -120,24 +122,25 @@ func (t *Template) evalToBuf(vars core.Vars, tee io.Writer) (*strings.Builder, e
 	}
 
 	err = llt.Execute(w, vars)
-	return b, err
+	*p = b.String()
+	return err
 }
 
-func readToBuf(path string) (*strings.Builder, os.FileMode, error) {
+func readFile(path string) (string, os.FileMode, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return nil, 0, err
+		return "", 0, err
 	}
 	defer f.Close()
 
 	st, err := f.Stat()
 	if err != nil {
-		return nil, 0, err
+		return "", 0, err
 	}
 
 	b := new(strings.Builder)
 	b.Grow(int(st.Size()))
 
 	_, err = io.Copy(b, f)
-	return b, st.Mode(), err
+	return b.String(), st.Mode(), err
 }
