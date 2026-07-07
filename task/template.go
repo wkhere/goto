@@ -30,14 +30,14 @@ func (t *Template) Desc() string { return t.Name }
 func (t *Template) View(vars core.Vars) (changed bool, diff string,
 	notify []core.Handler, err error) {
 
-	dest, err := core.Eval("template.Dest", t.Dest, vars)
+	dest, err := core.Eval("Template.Dest", t.Dest, vars)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
 	}
 
 	oldContent, _, err := readFile(dest)
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
-		return false, "", nil, fmt.Errorf("read dest: %w", err)
+		return false, "", nil, fmt.Errorf("read old file: %w", err)
 	}
 
 	var newContent string
@@ -58,7 +58,7 @@ func (t *Template) View(vars core.Vars) (changed bool, diff string,
 func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 	notifies []core.Handler, err error) {
 
-	dest, err := core.Eval("template.Dest", t.Dest, vars)
+	dest, err := core.Eval("Template.Dest", t.Dest, vars)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
 	}
@@ -67,7 +67,7 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 	var oldMissing bool
 	if err != nil {
 		if oldMissing = errors.Is(err, fs.ErrNotExist); !oldMissing {
-			return false, "", nil, fmt.Errorf("read dest: %w", err)
+			return false, "", nil, fmt.Errorf("read old file: %w", err)
 		}
 	}
 
