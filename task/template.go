@@ -29,6 +29,7 @@ func (t *Template) Desc() string { return t.Name }
 
 func (t *Template) View(vars core.Vars) (changed bool, diff string,
 	notify []core.Handler, err error) {
+
 	dest, err := core.Eval("template.Dest", t.Dest, vars)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
@@ -56,6 +57,7 @@ func (t *Template) View(vars core.Vars) (changed bool, diff string,
 
 func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 	notifies []core.Handler, err error) {
+
 	dest, err := core.Eval("template.Dest", t.Dest, vars)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
