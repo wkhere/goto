@@ -28,3 +28,19 @@ func Eval(templateName, input string, vars Vars) (string, error) {
 	err = t.Execute(b, vars)
 	return b.String(), err
 }
+
+func DedupHandlers(hh *[]Handler) {
+	visited := make(map[Handler]struct{}, len(*hh))
+
+	nhh := make([]Handler, 0, len(*hh))
+
+	for _, h := range *hh {
+		if _, ok := visited[h]; ok {
+			continue
+		}
+		visited[h] = struct{}{}
+		nhh = append(nhh, h)
+	}
+
+	*hh = nhh
+}
