@@ -1,6 +1,7 @@
 package task
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -16,6 +17,7 @@ type Template struct {
 	Name     string
 	Template *template.Template
 	Dest     string
+	Mode     fs.FileMode
 	core.Notifier
 }
 
@@ -33,7 +35,7 @@ func (t *Template) View(vars core.Vars) (changed bool, diff string,
 	}
 
 	oldContent, _, err := readFile(dest)
-	if err != nil {
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return false, "", nil, fmt.Errorf("read dest: %w", err)
 	}
 
@@ -59,16 +61,26 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
 	}
 
-	oldContent, fileMode, err := readFile(dest)
+	oldContent, oldMode, err := readFile(dest)
+	var oldMissing bool
 	if err != nil {
-		return false, "", nil, fmt.Errorf("read dest: %w", err)
+		if oldMissing = errors.Is(err, fs.ErrNotExist); !oldMissing {
+			return false, "", nil, fmt.Errorf("read dest: %w", err)
+		}
 	}
 
+	newMode := t.Mode
+	if newMode == 0 && !oldMissing {
+		newMode = oldMode
+	}
+	if newMode == 0 {
+		return false, "", nil, fmt.Errorf("undefined task.Template.Mode %s", dest)
+	}
 	newPath, err := tmpPath(dest)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("create tmp path: %w", err)
 	}
-	newFile, err := os.OpenFile(newPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, fileMode)
+	newFile, err := os.OpenFile(newPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, newMode)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("create tmp file: %w", err)
 	}
@@ -96,9 +108,11 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 		return changed, diff, nil, err
 	}
 
-	err = os.Rename(dest, dest+"~")
-	if err != nil {
-		return changed, diff, nil, fmt.Errorf("backup dest: %w", err)
+	if !oldMissing {
+		err = os.Rename(dest, dest+"~")
+		if err != nil {
+			return changed, diff, nil, fmt.Errorf("backup dest: %w", err)
+		}
 	}
 	err = os.Rename(newPath, dest)
 	if err != nil {
@@ -122,7 +136,7 @@ func (t *Template) evalTo(p *string, tee io.Writer, vars core.Vars) error {
 	return err
 }
 
-func readFile(path string) (string, os.FileMode, error) {
+func readFile(path string) (string, fs.FileMode, error) {
 	f, err := os.Open(path)
 	if err != nil {
 		return "", 0, err
