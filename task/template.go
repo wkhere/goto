@@ -3,6 +3,7 @@ package task
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strings"
 	"text/template"
@@ -12,11 +13,14 @@ import (
 )
 
 type Template struct {
-	Name       string
-	SourceName string
-	Content    string
-	Dest       string
+	Name     string
+	Template *template.Template
+	Dest     string
 	core.Notifier
+}
+
+func MustParseTemplate(fsys fs.FS, path string) *template.Template {
+	return template.Must(template.ParseFS(fsys, path))
 }
 
 func (t *Template) Desc() string { return t.Name }
@@ -105,23 +109,15 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 
 }
 
-func (t *Template) guessSize() int { return ((len(t.Content)+100)/4096 + 1) * 4096 }
-
 func (t *Template) evalTo(p *string, tee io.Writer, vars core.Vars) error {
-	llt, err := template.New(t.SourceName).Parse(t.Content)
-	if err != nil {
-		return err
-	}
-
 	b := new(strings.Builder)
-	b.Grow(t.guessSize())
 
 	var w io.Writer = b
 	if tee != nil {
 		w = io.MultiWriter(b, tee)
 	}
 
-	err = llt.Execute(w, vars)
+	err := t.Template.Execute(w, vars)
 	*p = b.String()
 	return err
 }
@@ -139,7 +135,6 @@ func readFile(path string) (string, os.FileMode, error) {
 	}
 
 	b := new(strings.Builder)
-	b.Grow(int(st.Size()))
 
 	_, err = io.Copy(b, f)
 	return b.String(), st.Mode(), err
