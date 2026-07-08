@@ -21,6 +21,8 @@ type Template struct {
 	core.Notifier
 }
 
+var _ core.Task = (*Template)(nil)
+
 func MustParseTemplate(fsys fs.FS, path string) *template.Template {
 	return template.Must(template.ParseFS(fsys, path))
 }
