@@ -1,6 +1,7 @@
 package core
 
 import (
+	"slices"
 	"strings"
 	"text/template"
 )
@@ -32,15 +33,11 @@ func Eval(templateName, input string, vars Vars) (string, error) {
 func DedupHandlers(hh *[]Handler) {
 	visited := make(map[Handler]struct{}, len(*hh))
 
-	nhh := make([]Handler, 0, len(*hh))
-
-	for _, h := range *hh {
+	*hh = slices.DeleteFunc(*hh, func(h Handler) bool {
 		if _, ok := visited[h]; ok {
-			continue
+			return true
 		}
 		visited[h] = struct{}{}
-		nhh = append(nhh, h)
-	}
-
-	*hh = nhh
+		return false
+	})
 }
