@@ -14,11 +14,21 @@ type Task interface {
 	Exec(Vars) (changed bool, diff string, notify []Handler, err error)
 }
 
+type Transfer interface {
+	Desc() string
+	RemotePrep(Vars) (stats string, err error)
+	DoTransfer(Vars) (stats string, err error)
+}
+
 type Handler interface {
 	Run() error
 }
 
 type Notifier []Handler
+
+const (
+	MetavarRemote = "$remote"
+)
 
 func Eval(templateName, input string, vars Vars) (string, error) {
 	t, err := template.New(templateName).Parse(input)

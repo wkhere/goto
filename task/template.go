@@ -42,13 +42,17 @@ func (t *Template) View(vars core.Vars) (changed bool, diff string,
 		return false, "", nil, fmt.Errorf("read old file: %w", err)
 	}
 
+	newPath, err := tmpPath(dest)
+	if err != nil {
+		return false, "", nil, fmt.Errorf("create tmp path: %w", err)
+	}
 	var newContent string
 	err = t.evalTo(&newContent, nil, vars)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("eval new content: %w", err)
 	}
 
-	diff = textdiff.Unified(dest, dest+"-new", oldContent, newContent)
+	diff = textdiff.Unified(dest, newPath, oldContent, newContent)
 	changed = len(diff) > 0
 	if changed {
 		notify = t.Notifier
@@ -96,7 +100,7 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 		return false, "", nil, fmt.Errorf("eval new content: %w", err)
 	}
 
-	diff = textdiff.Unified(dest, dest+"-new", oldContent, newContent)
+	diff = textdiff.Unified(dest, newPath, oldContent, newContent)
 	changed = len(diff) > 0
 
 	err = newFile.Close()
@@ -120,6 +124,7 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 	}
 	err = os.Rename(newPath, dest)
 	if err != nil {
+		// todo: try to rename back the original from backup
 		return changed, diff, nil, fmt.Errorf("overwrite dest: %w", err)
 	}
 

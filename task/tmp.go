@@ -2,7 +2,6 @@ package task
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 )
 
@@ -14,6 +13,5 @@ func tmpPath(path string) (string, error) {
 	if f == "" {
 		return "", fmt.Errorf("path %q has empty file part", path)
 	}
-	return filepath.Join(d, fmt.Sprintf(".%s.goto-%d", f, os.Getpid())), nil
-
+	return filepath.Join(d, "."+f+"-goto"), nil
 }

@@ -1,0 +1,216 @@
+package main
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
+
+type PState struct {
+	Args      []string
+	Err       error
+	Flag, Val string
+}
+
+func (p *PState) Next() { p.Args = p.Args[1:] }
+
+func (p *PState) Arg() string { return p.Args[0] }
+
+func (p *PState) Error(err error) bool {
+	// saving only the first error
+	if p.Err == nil {
+		p.Err = err
+	}
+	return false
+}
+
+func (p *PState) Errorf(format string, a ...any) bool {
+	// saving only the first error
+	if p.Err == nil {
+		p.Err = fmt.Errorf(format, a...)
+	}
+	return false
+}
+
+func (p *PState) MatchJustFlag(short, long string) bool {
+	p.Flag, p.Val = "", ""
+
+	s := p.Args[0]
+	if s == short || s == long {
+		p.Flag = s
+		return true
+	}
+	return false
+}
+
+func (p *PState) MatchJustSingleFlag(flag string) bool {
+	p.Flag, p.Val = "", ""
+
+	s := p.Args[0]
+	if s == flag {
+		p.Flag = s
+		return true
+	}
+	return false
+}
+
+func (p *PState) MatchAnyFlag() bool {
+	p.Flag, p.Val = "", ""
+
+	s := p.Args[0]
+	if len(s) > 1 && s[0] == '-' {
+		p.Flag = s
+		return true
+	}
+	return false
+}
+
+func (p *PState) MatchFlagExpr(short, long string) bool {
+	p.Flag, p.Val = "", ""
+
+	var s = p.Args[0]
+	var n int
+	var isLong bool
+
+	if strings.HasPrefix(s, long) {
+		n, isLong = len(long), true
+	} else if strings.HasPrefix(s, short) {
+		n = len(short)
+	} else {
+		return false
+	}
+
+	p.Flag, s = s[:n], s[n:]
+	if isLong {
+		if len(s) == 0 {
+			if len(p.Args) == 1 {
+				return p.Errorf("flag %s needs a value", p.Flag)
+			}
+			p.Val, p.Args = p.Args[1], p.Args[1:]
+			return true
+		}
+		if s[0] != '=' {
+			return false
+		}
+		s = s[1:]
+	} else {
+		if len(s) > 0 && s[0] == '=' {
+			s = s[1:]
+		}
+	}
+
+	if len(s) == 0 {
+		if len(p.Args) == 1 {
+			return p.Errorf("flag %s needs a value", p.Flag)
+		}
+		p.Val, p.Args = p.Args[1], p.Args[1:]
+		return true
+	}
+	p.Val = s
+	return true
+}
+
+func (p *PState) MatchLongFlagExpr(long string) bool {
+	p.Flag, p.Val = "", ""
+
+	var s = p.Args[0]
+	var n int
+
+	if strings.HasPrefix(s, long) {
+		n = len(long)
+	} else {
+		return false
+	}
+
+	p.Flag, s = s[:n], s[n:]
+	if len(s) == 0 {
+		if len(p.Args) == 1 {
+			return p.Errorf("flag %s needs a value", p.Flag)
+		}
+		p.Val, p.Args = p.Args[1], p.Args[1:]
+		return true
+	}
+	if s[0] != '=' {
+		return false
+	}
+	s = s[1:]
+
+	if len(s) == 0 {
+		if len(p.Args) == 1 {
+			return p.Errorf("flag %s needs a value", p.Flag)
+		}
+		p.Val, p.Args = p.Args[1], p.Args[1:]
+		return true
+	}
+	p.Val = s
+	return true
+}
+
+func (p *PState) MatchBoolFlag(short, long string) bool {
+	p.Flag, p.Val = "", ""
+
+	var s = p.Args[0]
+	var n int
+	var isLong bool
+
+	if strings.HasPrefix(s, long) {
+		n, isLong = len(long), true
+	} else if strings.HasPrefix(s, short) {
+		n = len(short)
+	} else {
+		return false
+	}
+
+	p.Flag, s = s[:n], s[n:]
+	switch {
+	case len(s) == 0:
+		s = "true"
+	case isLong:
+		if s[0] != '=' {
+			return false
+		}
+		s = s[1:]
+	case !isLong:
+		if len(s) > 0 && s[0] == '=' {
+			s = s[1:]
+		}
+	}
+	p.Val = s
+	return true
+}
+
+func (p *PState) ParseBool(dest *bool) bool {
+	x, err := strconv.ParseBool(p.Val)
+	if err != nil {
+		return p.Errorf("flag %s: %w", p.Flag, err)
+	}
+	*dest = x
+	return true
+}
+
+func (p *PState) ParseInt(dest *int) bool {
+	x, err := strconv.Atoi(p.Val)
+	if err != nil {
+		return p.Errorf("flag %s: %w", p.Flag, err)
+	}
+	*dest = x
+	return true
+}
+
+func (p *PState) ParseUint(dest *uint) bool {
+	x, err := strconv.ParseUint(p.Val, 10, 0)
+	if err != nil {
+		return p.Errorf("flag %s: %w", p.Flag, err)
+	}
+	*dest = uint(x)
+	return true
+}
+
+func (p *PState) ParseFloat(dest *float64) bool {
+	x, err := strconv.ParseFloat(p.Val, 64)
+	if err != nil {
+		return p.Errorf("flag %s: %w", p.Flag, err)
+	}
+	*dest = x
+	return true
+}
