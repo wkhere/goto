@@ -55,8 +55,13 @@ func transferAgent(host string) error {
 	return cmd.Run()
 }
 
-func doLocal(host string, tagsFlag string, verb string) error {
-	cmd := exec.Command("./"+targetLocal, tagsFlag, "-r="+host, verb)
+func doLocal(host string, tagsConcat string, verb string) error {
+	var cmd *exec.Cmd
+	if tagsConcat == "" {
+		cmd = exec.Command("./"+targetLocal, "-r", host, verb)
+	} else {
+		cmd = exec.Command("./"+targetLocal, "-t", tagsConcat, "-r", host, verb)
+	}
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -64,9 +69,13 @@ func doLocal(host string, tagsFlag string, verb string) error {
 	return cmd.Run()
 }
 
-func doRemote(host string, tagsFlag string, verb string) error {
-	cmd := exec.Command("ssh", host, "./"+targetShort, tagsFlag, verb)
-
+func doRemote(host string, tagsConcat string, verb string) error {
+	var cmd *exec.Cmd
+	if tagsConcat == "" {
+		cmd = exec.Command("ssh", host, "./"+targetShort, verb)
+	} else {
+		cmd = exec.Command("ssh", host, "./"+targetShort, "-t", tagsConcat, verb)
+	}
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
@@ -103,11 +112,11 @@ func run(a *action) error {
 	}
 	fmt.Println("")
 
-	err = doRemote(a.host, a.tagsFlag, "prep")
+	err = doRemote(a.host, a.tagsConcat, "prep")
 	if err != nil {
 		return err
 	}
-	err = doLocal(a.host, a.tagsFlag, "transfer")
+	err = doLocal(a.host, a.tagsConcat, "transfer")
 	if err != nil {
 		return err
 	}
@@ -115,7 +124,7 @@ func run(a *action) error {
 	if a.dryrun {
 		actverb = "view"
 	}
-	err = doRemote(a.host, a.tagsFlag, actverb)
+	err = doRemote(a.host, a.tagsConcat, actverb)
 	return err
 }
 

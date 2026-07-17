@@ -8,9 +8,9 @@ import (
 )
 
 type action struct {
-	host     string
-	tagsFlag string
-	dryrun   bool
+	host       string
+	tagsConcat string
+	dryrun     bool
 
 	help func()
 }
@@ -30,7 +30,7 @@ func parseArgs(args []string) (a action, _ error) {
 			a.dryrun = true
 
 		case p.MatchFlagExpr("-t", "--tags"):
-			a.tagsFlag = "-t=" + p.Val
+			a.tagsConcat = p.Val
 
 		case p.MatchJustFlag("-h", "--help"):
 			a.help = usage
