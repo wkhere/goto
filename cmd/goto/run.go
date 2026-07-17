@@ -47,7 +47,7 @@ func build(gocmd, target, goos, goarch string) error {
 
 func transferAgent(host string) error {
 	// TODO: suffixes for the transferred binary!
-	cmd := exec.Command("rsync", "-c", targetRemote, host+":"+targetShort)
+	cmd := exec.Command("rsync", "-c", targetRemote, host+(":"+targetShort))
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
