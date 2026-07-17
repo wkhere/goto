@@ -78,6 +78,6 @@ func die(exitcode int, err error) {
 	if errors.As(err, &errSubcmd) {
 		os.Exit(errSubcmd.ExitCode())
 	}
-	fmt.Fprintln(os.Stderr, err)
+	fmt.Fprintln(os.Stderr, "goto:", err)
 	os.Exit(exitcode)
 }

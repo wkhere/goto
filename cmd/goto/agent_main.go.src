@@ -198,7 +198,7 @@ func main() {
 }
 
 func die(exitcode int, err error) {
-	fmt.Fprintln(os.Stderr, err)
+	fmt.Fprintln(os.Stderr, os.Args[0]+":", err)
 	os.Exit(exitcode)
 }
 
