@@ -2,4 +2,7 @@ build:
 	go vet   ./...
 	go build ./cmd/goto
 
-.PHONY: build
+install:
+	go install -ldflags=-s ./cmd/goto
+
+.PHONY: build install
