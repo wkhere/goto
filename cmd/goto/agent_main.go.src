@@ -144,7 +144,11 @@ func run(a *pargs) {
 
 	var allHandlers []core.Handler
 
-	fmt.Println("== tasks:")
+	if a.dryrun {
+		fmt.Println("== tasks dry-run:")
+	} else {
+		fmt.Println("== tasks:")
+	}
 
 	for _, task := range Tasks(a.tags) {
 		changed, diff, notify, err := f(task, Vars)
