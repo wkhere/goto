@@ -142,7 +142,7 @@ func run(a *pargs) {
 		die(1, errors.New("action mismatch"))
 	}
 
-	var allHandlers []core.Handler
+	var handlers []core.Handler
 
 	if a.dryrun {
 		fmt.Println("== tasks dry-run:")
@@ -162,17 +162,17 @@ func run(a *pargs) {
 		} else {
 			fmt.Println()
 		}
-		allHandlers = append(allHandlers, notify...)
+		handlers = append(handlers, notify...)
 	}
 
-	if len(allHandlers) == 0 {
+	if len(handlers) == 0 {
 		return
 	}
-	core.DedupHandlers(&allHandlers)
+	core.DedupHandlers(&handlers)
 
 	fmt.Println("== handlers:")
 
-	for _, handler := range allHandlers {
+	for _, handler := range handlers {
 
 		if a.dryrun {
 			fmt.Printf("=== %#v\n", handler)
