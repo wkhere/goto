@@ -22,6 +22,7 @@ type Copy struct {
 	Src  string
 	Dest string
 	Mode fs.FileMode
+	Vars core.Vars
 	core.Notifier
 }
 
@@ -33,7 +34,8 @@ var (
 func (c *Copy) Desc() string { return c.Name }
 
 func (c *Copy) RemotePrep(vars core.Vars) (stats string, err error) {
-	dest, err := core.Eval("Copy.Dest", c.Dest, vars)
+
+	vars, dest, err := vars.EvalWithExpr(c.Dest, core.Funcs, c.Vars)
 	if err != nil {
 		return "", fmt.Errorf("eval dest: %w", err)
 	}
@@ -62,11 +64,12 @@ func (c *Copy) RemotePrep(vars core.Vars) (stats string, err error) {
 
 func (c *Copy) DoTransfer(vars core.Vars) (stats string, err error) {
 	// note: this is run locally
-	src, err := core.Eval("Copy.Src", c.Src, vars)
+
+	vars, src, err := vars.EvalWithExpr(c.Src, core.Funcs, c.Vars)
 	if err != nil {
 		return "", fmt.Errorf("eval src: %w", err)
 	}
-	dest, err := core.Eval("Copy.Dest", c.Dest, vars)
+	dest, err := vars.EvalExpr(c.Dest)
 	if err != nil {
 		return "", fmt.Errorf("eval dest: %w", err)
 	}
@@ -94,7 +97,8 @@ func (c *Copy) DoTransfer(vars core.Vars) (stats string, err error) {
 }
 
 func (c *Copy) View(vars core.Vars) (changed bool, diff string, notify []core.Handler, err error) {
-	dest, err := core.Eval("Copy.Dest", c.Dest, vars)
+
+	vars, dest, err := vars.EvalWithExpr(c.Dest, core.Funcs, c.Vars)
 	if err != nil {
 		err = fmt.Errorf("eval dest: %w", err)
 		return
@@ -124,7 +128,8 @@ func (c *Copy) View(vars core.Vars) (changed bool, diff string, notify []core.Ha
 }
 
 func (c *Copy) Exec(vars core.Vars) (changed bool, diff string, notify []core.Handler, err error) {
-	dest, err := core.Eval("Copy.Dest", c.Dest, vars)
+
+	vars, dest, err := vars.EvalWithExpr(c.Dest, core.Funcs, c.Vars)
 	if err != nil {
 		err = fmt.Errorf("eval dest: %w", err)
 		return

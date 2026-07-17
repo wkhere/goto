@@ -18,6 +18,7 @@ type Template struct {
 	Template *template.Template
 	Dest     string
 	Mode     fs.FileMode
+	Vars     core.Vars
 	core.Notifier
 }
 
@@ -32,7 +33,7 @@ func (t *Template) Desc() string { return t.Name }
 func (t *Template) View(vars core.Vars) (changed bool, diff string,
 	notify []core.Handler, err error) {
 
-	dest, err := core.Eval("Template.Dest", t.Dest, vars)
+	vars, dest, err := vars.EvalWithExpr(t.Dest, core.Funcs, t.Vars)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
 	}
@@ -64,7 +65,7 @@ func (t *Template) View(vars core.Vars) (changed bool, diff string,
 func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 	notifies []core.Handler, err error) {
 
-	dest, err := core.Eval("Template.Dest", t.Dest, vars)
+	vars, dest, err := vars.EvalWithExpr(t.Dest, core.Funcs, t.Vars)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
 	}
