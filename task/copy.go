@@ -260,7 +260,7 @@ func hexHash(h hash.Hash) string {
 }
 
 func parseRsyncStats(s string) (stats string, err error) {
-	var sentp, recvp, totalp, speedupp string
+	var buf1, buf2 string
 	var sent, recv, total int64
 	var speedup float64
 
@@ -269,16 +269,16 @@ func parseRsyncStats(s string) (stats string, err error) {
 	} else {
 		return "[no stats]", nil
 	}
-	_, err = fmt.Sscanf(s, "sent %s bytes received %s bytes", &sentp, &recvp)
+	_, err = fmt.Sscanf(s, "sent %s bytes received %s bytes", &buf1, &buf2)
 	if err != nil {
 		return "[invalid stats]", nil
 	}
 	r := strings.NewReplacer(",", "")
-	sent, err = strconv.ParseInt(r.Replace(sentp), 10, 64)
+	sent, err = strconv.ParseInt(r.Replace(buf1), 10, 64)
 	if err != nil {
 		return "[invalid stats]", nil
 	}
-	recv, err = strconv.ParseInt(r.Replace(recvp), 10, 64)
+	recv, err = strconv.ParseInt(r.Replace(buf2), 10, 64)
 	if err != nil {
 		return "[invalid stats]", nil
 	}
@@ -289,16 +289,16 @@ func parseRsyncStats(s string) (stats string, err error) {
 	} else {
 		return stats, nil
 	}
-	_, err = fmt.Sscanf(s, "total size is %s  speedup is %s\n", &totalp, &speedupp)
+	_, err = fmt.Sscanf(s, "total size is %s  speedup is %s\n", &buf1, &buf2)
 	if err != nil {
 		return stats, nil
 	}
-	total, err = strconv.ParseInt(r.Replace(totalp), 10, 64)
+	total, err = strconv.ParseInt(r.Replace(buf1), 10, 64)
 	if err != nil {
 		return stats, nil
 	}
 	stats += fmt.Sprintf(", total: %.3B", sizefmt.Size(total))
-	speedup, err = strconv.ParseFloat(r.Replace(speedupp), 64)
+	speedup, err = strconv.ParseFloat(r.Replace(buf2), 64)
 	if err != nil {
 		return stats, nil
 	}
