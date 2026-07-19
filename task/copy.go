@@ -224,15 +224,12 @@ func bindiff(f1, f2 *os.File) (changed bool, diff string, err error) {
 	errc := make(chan error)
 
 	go func() {
-		_, err := io.Copy(h1, f1)
-		errc <- err
-	}()
-	go func() {
 		_, err := io.Copy(h2, f2)
 		errc <- err
 	}()
+	_, err = io.Copy(h1, f1)
 
-	if err = <-errc; err != nil {
+	if err != nil {
 		err = fmt.Errorf("1st file hash: %w", err)
 		return
 	}
