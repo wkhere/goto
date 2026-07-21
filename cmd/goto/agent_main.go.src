@@ -29,7 +29,10 @@ func (taskAction) isAction()     {}
 func (transferAction) isAction() {}
 
 func usage() {
-	fmt.Printf(`usage: %[1]s [-t,--tags=TAGS] [-r,--remote=HOST] prep|transfer|view|exec
+	fmt.Printf(`usage: %[1]s [-t,--tags=TAGS] [-r,--remote=HOST] VERB
+
+	VERB: prep|transfer|view|exec
+
 `,
 		os.Args[0],
 	)
@@ -59,7 +62,7 @@ func parseArgs(args []string) (a pargs, _ error) {
 
 		default:
 			if verb != "" {
-				p.Errorf("conflicting commands: %s %s", verb, p.Arg())
+				p.Errorf("conflicting verbs: %s %s", verb, p.Arg())
 			}
 			switch verb = p.Arg(); verb {
 			case "prep":
@@ -81,7 +84,7 @@ func parseArgs(args []string) (a pargs, _ error) {
 				a.action = taskAction(core.Task.Exec)
 
 			default:
-				p.Errorf("unknown command: %s", verb)
+				p.Errorf("unknown verb: %s", verb)
 			}
 		}
 	}
@@ -91,7 +94,7 @@ func parseArgs(args []string) (a pargs, _ error) {
 		return a, p.Err
 
 	case verb == "":
-		return a, errors.New("no command given")
+		return a, errors.New("no verb given")
 
 	case verb == "transfer" && remote == "":
 		return a, errors.New("-r,--remote needed for transfer")
