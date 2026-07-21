@@ -8,7 +8,7 @@ import (
 )
 
 type action struct {
-	host       string
+	host       host
 	tagsConcat string
 	dryrun     bool
 
@@ -43,7 +43,7 @@ func parseArgs(args []string) (a action, _ error) {
 			if a.host != "" {
 				p.Errorf("expected just 1 HOST arg")
 			}
-			a.host = p.Arg()
+			a.host = host(p.Arg())
 		}
 	}
 

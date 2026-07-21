@@ -16,6 +16,9 @@ const (
 	targetShort  = ".agent"
 )
 
+type host string
+type verb string
+
 //go:embed agent_main.go.src
 var agentMain []byte
 
@@ -45,9 +48,9 @@ func build(gocmd, target, goos, goarch string) error {
 	return cmd.Run()
 }
 
-func transferAgent(host string) error {
+func transferAgent(host host) error {
 	// TODO: suffixes for the transferred binary!
-	cmd := exec.Command("rsync", "-c", targetRemote, host+(":"+targetShort))
+	cmd := exec.Command("rsync", "-c", targetRemote, string(host)+(":"+targetShort))
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -55,27 +58,30 @@ func transferAgent(host string) error {
 	return cmd.Run()
 }
 
-func doLocal(host string, tagsConcat string, verb string) error {
-	var cmd *exec.Cmd
-	if tagsConcat == "" {
-		cmd = exec.Command("./"+targetLocal, "-r", host, verb)
-	} else {
-		cmd = exec.Command("./"+targetLocal, "-t", tagsConcat, "-r", host, verb)
+func doLocal(host host, verb verb, tagsConcat string) error {
+
+	args := []string{string(verb), "-r", string(host)}
+
+	if tagsConcat != "" {
+		args = append(args, "-t", tagsConcat)
 	}
 
+	cmd := exec.Command("./"+targetLocal, args...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
 	return cmd.Run()
 }
 
-func doRemote(host string, tagsConcat string, verb string) error {
-	var cmd *exec.Cmd
-	if tagsConcat == "" {
-		cmd = exec.Command("ssh", host, "./"+targetShort, verb)
-	} else {
-		cmd = exec.Command("ssh", host, "./"+targetShort, "-t", tagsConcat, verb)
+func doRemote(host host, verb verb, tagsConcat string) error {
+
+	args := []string{string(host), "./" + targetShort, string(verb)}
+
+	if tagsConcat != "" {
+		args = append(args, "-t", tagsConcat)
 	}
+
+	cmd := exec.Command("ssh", args...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
@@ -112,19 +118,19 @@ func run(a *action) error {
 	}
 	fmt.Println("")
 
-	err = doRemote(a.host, a.tagsConcat, "prep")
+	err = doRemote(a.host, "prep", a.tagsConcat)
 	if err != nil {
 		return err
 	}
-	err = doLocal(a.host, a.tagsConcat, "transfer")
+	err = doLocal(a.host, "transfer", a.tagsConcat)
 	if err != nil {
 		return err
 	}
-	var actverb = "exec"
+	var actverb verb = "exec"
 	if a.dryrun {
 		actverb = "view"
 	}
-	err = doRemote(a.host, a.tagsConcat, actverb)
+	err = doRemote(a.host, actverb, a.tagsConcat)
 	return err
 }
 
