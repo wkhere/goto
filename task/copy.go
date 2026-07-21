@@ -69,7 +69,7 @@ func (c *Copy) DoTransfer(vars core.Vars) (stats string, err error) {
 	if err != nil {
 		return "", fmt.Errorf("eval src: %w", err)
 	}
-	dest, err := vars.EvalExpr(c.Dest)
+	dest, err := vars.EvalExpr(c.Dest, core.Funcs)
 	if err != nil {
 		return "", fmt.Errorf("eval dest: %w", err)
 	}
