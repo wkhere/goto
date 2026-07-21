@@ -29,7 +29,7 @@ func (taskAction) isAction()     {}
 func (transferAction) isAction() {}
 
 func usage() {
-	fmt.Printf(`usage: %[1]s [-t,--tags=TAGS] [-r,--remote=HOST] VERB
+	fmt.Printf(`usage: %[1]s [-t,--tags=TAGS] [-r,--remote=HOST] [-v,--print-vars] VERB
 
 	VERB: prep|transfer|view|exec
 
@@ -47,11 +47,14 @@ func parseArgs(args []string) (a pargs, _ error) {
 	for ; len(p.Args) > 0 && p.Err == nil; p.Next() {
 		switch {
 
+		case p.MatchFlagExpr("-r", "--remote"):
+			remote = p.Val
+
 		case p.MatchFlagExpr("-t", "--tags"):
 			a.tags = strings.Split(p.Val, ",")
 
-		case p.MatchFlagExpr("-r", "--remote"):
-			remote = p.Val
+		case p.MatchJustFlag("-v", "--print-vars"):
+			core.Options.PrintVars = true
 
 		case p.MatchJustFlag("-h", "--help"):
 			a.help = usage

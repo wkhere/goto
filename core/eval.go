@@ -17,12 +17,19 @@ func (vars0 Vars) Eval(fmap FuncMap, subvars ...Vars) (rvars Vars, err error) {
 	}
 
 	for _, lvars := range subvars {
+		if Options.PrintVars {
+			fmt.Printf("*** lvars: %#v\n", lvars)
+		}
 		rvars.merge(lvars)
 
 		rvars, err = rvars.eval(fmap)
 		if err != nil {
 			return rvars, err
 		}
+	}
+
+	if Options.PrintVars {
+		fmt.Printf("*** rvars: %#v\n", rvars)
 	}
 	return rvars, nil
 }

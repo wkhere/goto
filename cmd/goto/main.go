@@ -10,13 +10,14 @@ import (
 type action struct {
 	host       host
 	tagsConcat string
+	printVars  bool
 	dryrun     bool
 
 	help func()
 }
 
 func usage() {
-	fmt.Println(`usage: goto HOST [-t,--tags=TAGS] [-n,--dry-run]`)
+	fmt.Println(`usage: goto HOST [-n,--dry-run] [-t,--tags=TAGS] [-v,--print-vars]`)
 }
 
 func parseArgs(args []string) (a action, _ error) {
@@ -31,6 +32,9 @@ func parseArgs(args []string) (a action, _ error) {
 
 		case p.MatchFlagExpr("-t", "--tags"):
 			a.tagsConcat = p.Val
+
+		case p.MatchJustFlag("-v", "--print-vars"):
+			a.printVars = true
 
 		case p.MatchJustFlag("-h", "--help"):
 			a.help = usage

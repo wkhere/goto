@@ -58,12 +58,15 @@ func transferAgent(host host) error {
 	return cmd.Run()
 }
 
-func doLocal(host host, verb verb, tagsConcat string) error {
+func doLocal(host host, verb verb, tagsConcat string, printVars bool) error {
 
 	args := []string{string(verb), "-r", string(host)}
 
 	if tagsConcat != "" {
 		args = append(args, "-t", tagsConcat)
+	}
+	if printVars {
+		args = append(args, "-v")
 	}
 
 	cmd := exec.Command("./"+targetLocal, args...)
@@ -73,12 +76,15 @@ func doLocal(host host, verb verb, tagsConcat string) error {
 	return cmd.Run()
 }
 
-func doRemote(host host, verb verb, tagsConcat string) error {
+func doRemote(host host, verb verb, tagsConcat string, printVars bool) error {
 
 	args := []string{string(host), "./" + targetShort, string(verb)}
 
 	if tagsConcat != "" {
 		args = append(args, "-t", tagsConcat)
+	}
+	if printVars {
+		args = append(args, "-v")
 	}
 
 	cmd := exec.Command("ssh", args...)
@@ -118,11 +124,11 @@ func run(a *action) error {
 	}
 	fmt.Println("")
 
-	err = doRemote(a.host, "prep", a.tagsConcat)
+	err = doRemote(a.host, "prep", a.tagsConcat, a.printVars)
 	if err != nil {
 		return err
 	}
-	err = doLocal(a.host, "transfer", a.tagsConcat)
+	err = doLocal(a.host, "transfer", a.tagsConcat, a.printVars)
 	if err != nil {
 		return err
 	}
@@ -130,7 +136,7 @@ func run(a *action) error {
 	if a.dryrun {
 		actverb = "view"
 	}
-	err = doRemote(a.host, actverb, a.tagsConcat)
+	err = doRemote(a.host, actverb, a.tagsConcat, a.printVars)
 	return err
 }
 
