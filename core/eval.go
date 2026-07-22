@@ -202,10 +202,19 @@ func pushFieldRefs(c chan<- string, nodes []parse.Node) {
 	}
 }
 
-func (vars Vars) EvalExpr(expr string, fmap FuncMap) (string, error) {
+func (vars Vars) EvalWithExpr(expr string, fmap FuncMap, subvars ...Vars) (Vars, string, error) {
+	vars, err := vars.Eval(fmap, subvars...)
+	if err != nil {
+		return vars, "", err
+	}
+	s, err := vars.EvalExpr(expr, fmap)
+	return vars, s, err
+}
 
-	env := makeVarEnv(len(vars))
-	err := env.feed(fmap, vars)
+func (evaluatedVars Vars) EvalExpr(expr string, fmap FuncMap) (string, error) {
+
+	env := makeVarEnv(len(evaluatedVars))
+	err := env.feed(fmap, evaluatedVars)
 	if err != nil {
 		return "", err
 	}
@@ -219,15 +228,6 @@ func (vars Vars) EvalExpr(expr string, fmap FuncMap) (string, error) {
 	}
 
 	b := new(strings.Builder)
-	err = env.evals["$expr"].Execute(b, vars)
+	err = env.evals["$expr"].Execute(b, evaluatedVars)
 	return b.String(), err
-}
-
-func (vars Vars) EvalWithExpr(expr string, fmap FuncMap, subvars ...Vars) (Vars, string, error) {
-	vars, err := vars.Eval(fmap, subvars...)
-	if err != nil {
-		return vars, "", err
-	}
-	s, err := vars.EvalExpr(expr, fmap)
-	return vars, s, err
 }
