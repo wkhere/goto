@@ -83,7 +83,7 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 		newMode = oldMode
 	}
 	if newMode == 0 {
-		return false, "", nil, fmt.Errorf("undefined task.Template.Mode %s", dest)
+		return false, "", nil, fmt.Errorf("undefined file mode for %s", dest)
 	}
 	newPath, err := tmpPath(dest)
 	if err != nil {
