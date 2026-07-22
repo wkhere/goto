@@ -1,5 +1,6 @@
 build:
 	go vet   ./...
+	go test  ./core
 	go build ./cmd/goto
 
 install:
