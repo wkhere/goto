@@ -161,7 +161,7 @@ func (env varEnv) markVar(name string) {
 }
 
 func (env varEnv) parseExpr(name, expr string, fmap FuncMap) error {
-	t, err := template.New("expr").Funcs(fmap).Parse(expr)
+	t, err := template.New(name).Funcs(fmap).Parse(expr)
 	if err != nil {
 		return err
 	}
