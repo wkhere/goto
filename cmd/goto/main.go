@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"github.com/wkhere/gotenv"
 )
 
 type action struct {
@@ -69,6 +71,11 @@ func main() {
 	if a.help != nil {
 		a.help()
 		os.Exit(0)
+	}
+
+	err = gotenv.Load()
+	if err != nil && !os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "WARN: %v\n", err)
 	}
 
 	err = run(&a)
