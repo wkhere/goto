@@ -228,6 +228,8 @@ func bindiff(f1, f2 *os.File) (changed bool, diff string, err error) {
 
 	errc := make(chan error)
 
+	// Note: runing both hashes page by page and comparing results early would finish faster
+	// when the difference is early in the file, but then the sum diagnostics is lost
 	go func() {
 		_, err := io.Copy(h2, f2)
 		errc <- err
