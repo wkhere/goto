@@ -30,16 +30,16 @@ func MustParseTemplate(fsys fs.FS, path string) *template.Template {
 
 func (t *Template) Desc() string { return t.Name }
 
-func (t *Template) View(vars core.Vars) (changed bool, diff string,
-	notify []core.Handler, err error) {
+func (t *Template) View(vars core.Vars) (changed bool, diff string, notify []core.Handler,
+	err error) {
 
 	vars, dest, err := vars.EvalWithExpr(t.Dest, core.Funcs, t.Vars)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
 	}
 
-	oldContent, _, err := readFile(dest)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+	oldContent, oldMode, oldExists, err := readFile(dest)
+	if err != nil {
 		return false, "", nil, fmt.Errorf("read old file: %w", err)
 	}
 
@@ -55,35 +55,41 @@ func (t *Template) View(vars core.Vars) (changed bool, diff string,
 
 	diff = textdiff.Unified(dest, newPath, oldContent, newContent)
 	changed = len(diff) > 0
+
+	if oldExists {
+		modeChanged, diff2 := modeDiff(oldMode, t.Mode)
+		changed = changed || modeChanged
+		if modeChanged {
+			diff += diff2
+		}
+	}
+
 	if changed {
 		notify = t.Notifier
 	}
 	return changed, diff, notify, nil
-
 }
 
-func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
-	notifies []core.Handler, err error) {
+func (t *Template) Exec(vars core.Vars) (changed bool, diff string, notify []core.Handler,
+	err error) {
 
 	vars, dest, err := vars.EvalWithExpr(t.Dest, core.Funcs, t.Vars)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("eval dest: %w", err)
 	}
 
-	oldContent, oldMode, err := readFile(dest)
-	var oldMissing bool
+	oldContent, oldMode, oldExists, err := readFile(dest)
 	if err != nil {
-		if oldMissing = errors.Is(err, fs.ErrNotExist); !oldMissing {
-			return false, "", nil, fmt.Errorf("read old file: %w", err)
-		}
+		return false, "", nil, fmt.Errorf("read old file: %w", err)
 	}
 
 	newMode := t.Mode
-	if newMode == 0 && !oldMissing {
-		newMode = oldMode
-	}
-	if newMode == 0 {
-		return false, "", nil, fmt.Errorf("undefined file mode for %s", dest)
+	if newMode == 000 {
+		if oldExists {
+			newMode = oldMode
+		} else {
+			newMode = 0666
+		}
 	}
 	newPath, err := tmpPath(dest)
 	if err != nil {
@@ -114,10 +120,10 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 		if err != nil {
 			err = fmt.Errorf("remove tmp file: %w", err)
 		}
-		return changed, diff, nil, err
+		goto compareMode
 	}
 
-	if !oldMissing {
+	if oldExists {
 		err = os.Rename(dest, dest+"~")
 		if err != nil {
 			return changed, diff, nil, fmt.Errorf("backup dest: %w", err)
@@ -129,8 +135,24 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string,
 		return changed, diff, nil, fmt.Errorf("overwrite dest: %w", err)
 	}
 
-	return changed, diff, t.Notifier, nil
+compareMode:
+	if oldExists {
+		modeChanged, diff2 := modeDiff(oldMode, t.Mode)
+		changed = changed || modeChanged
+		if modeChanged {
+			err = os.Chmod(dest, t.Mode)
+			if err != nil {
+				err = fmt.Errorf("change dest file mode: %w", err)
+				return
+			}
+			diff += diff2
+		}
+	}
 
+	if changed {
+		notify = t.Notifier
+	}
+	return changed, diff, notify, nil
 }
 
 func (t *Template) evalTo(p *string, tee io.Writer, vars core.Vars) error {
@@ -146,20 +168,23 @@ func (t *Template) evalTo(p *string, tee io.Writer, vars core.Vars) error {
 	return err
 }
 
-func readFile(path string) (string, fs.FileMode, error) {
+func readFile(path string) (content string, mode fs.FileMode, exists bool, err error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return "", 0, err
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", 0, false, nil
+		}
+		return "", 0, true, err
 	}
 	defer f.Close()
 
 	st, err := f.Stat()
 	if err != nil {
-		return "", 0, err
+		return "", 0, true, err
 	}
 
 	b := new(strings.Builder)
 
 	_, err = io.Copy(b, f)
-	return b.String(), st.Mode(), err
+	return b.String(), st.Mode(), true, err
 }
