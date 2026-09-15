@@ -179,6 +179,21 @@ func (p *PState) MatchBoolFlag(short, long string) bool {
 	return true
 }
 
+func (p *PState) UnfoldOneLetterFlags() {
+	arg := p.Args[0]
+	oneLetterFlags := make([]string, 0, len(arg)-1)
+	for _, c := range arg[1:] {
+		if c >= 'a' && c <= 'z' {
+			oneLetterFlags = append(oneLetterFlags, "-"+string(c))
+		} else {
+			p.Errorf("invalid flag: %s", arg)
+			return
+		}
+	}
+	p.Args = append(p.Args[:1], append(oneLetterFlags, p.Args[1:]...)...)
+
+}
+
 func (p *PState) ParseBool(dest *bool) bool {
 	x, err := strconv.ParseBool(p.Val)
 	if err != nil {

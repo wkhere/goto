@@ -43,6 +43,10 @@ func parseArgs(args []string) (a action, _ error) {
 			return a, nil
 
 		case p.MatchAnyFlag():
+			if len(p.Flag) > 2 {
+				p.UnfoldOneLetterFlags()
+				continue
+			}
 			p.Errorf("invalid flag: %s", p.Flag)
 
 		default:
