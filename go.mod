@@ -1,4 +1,4 @@
-module gitlab.com/wkhere/goto
+module codeberg.org/wkhere/goto
 
 go 1.25.0
 

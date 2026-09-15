@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"strings"
 
+	"codeberg.org/wkhere/goto/core"
 	"git.sr.ht/~mariusor/sizefmt"
-	"gitlab.com/wkhere/goto/core"
 )
 
 type Copy struct {
