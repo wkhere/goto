@@ -21,5 +21,3 @@ By default work around Linux inconsistencies
 (like, service names: ntp/ntpd, ssh/sshd, apache2/httpd
  on ubuntu/centos).
 
-
-Domain idea: gotocm.io
