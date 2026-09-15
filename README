@@ -3,4 +3,5 @@ goto
 
 Goto considered harmless!
 
-Goto is a minimal and fast CM tool.
+Goto is a minimal and fast CM/CI/CD tool (you name it).
+Think of a faster Ansible and some basic subset of modules.
