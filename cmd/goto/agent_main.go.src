@@ -196,7 +196,7 @@ func run(a *pargs) {
 			fmt.Printf("=== %#v, error: %v\n", handler, err)
 			os.Exit(1)
 		}
-		fmt.Printf("=== %#v OK\n", handler)
+		fmt.Printf("=== %#v ok\n", handler)
 	}
 }
 

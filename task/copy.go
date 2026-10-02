@@ -76,7 +76,7 @@ func (c *Copy) RemotePrep(vars core.Vars) (stats string, err error) {
 		return "", fmt.Errorf("prep/hardlink the transfer file: %w", err)
 	}
 	// transfer file linked
-	return "prep/hardlink the transfer file: OK", nil
+	return "prep/hardlink the transfer file: ok", nil
 }
 
 func (c *Copy) DoTransfer(vars core.Vars) (stats string, err error) {
