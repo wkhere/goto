@@ -182,7 +182,11 @@ func run(a *pargs) {
 	}
 	core.DedupHandlers(&handlers)
 
-	fmt.Println("== handlers:")
+	if a.dryrun {
+		fmt.Println("== handlers dry-run:")
+	} else {
+		fmt.Println("== handlers:")
+	}
 
 	for _, handler := range handlers {
 
