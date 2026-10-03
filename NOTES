@@ -1,7 +1,7 @@
-Tasks can be simply Go structures. Put the tasks as code in the `agent` dir,
+Tasks can be simply Go structures. Put the tasks as code in the `act` dir,
 plus a simple main.go,
-`goto` command should cd to this and compile the agent with ldflags=-s,
-then send & run the agent.
+`goto` command should cd to this and compile the actor with ldflags=-s,
+then send & run the actor.
 
 
 Dry-run mode is needed for all tasks.

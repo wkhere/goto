@@ -10,31 +10,31 @@ import (
 )
 
 const (
-	agentDir     = "agent"
-	targetLocal  = ".agent.local"
-	targetRemote = ".agent.remote"
-	targetShort  = ".agent"
+	actorDir     = "act"
+	targetLocal  = ".actor.local"
+	targetRemote = ".actor.remote"
+	targetShort  = ".actor"
 )
 
 type host string
 type verb string
 
-//go:embed agent_main.go.src
-var agentMain []byte
+//go:embed actor_main.go.src
+var actorMain []byte
 
 func injectMain() (err error) {
-	f, err := os.Create(filepath.Join(agentDir, "main.go"))
+	f, err := os.Create(filepath.Join(actorDir, "main.go"))
 	if err != nil {
 		return err
 	}
 	defer safeClose(f, &err)
 
-	_, err = f.Write(agentMain)
+	_, err = f.Write(actorMain)
 	return err
 }
 
 func build(gocmd, target, goos, goarch string) error {
-	cmd := exec.Command(gocmd, "build", "-ldflags=-s", "-o", target, "./"+agentDir)
+	cmd := exec.Command(gocmd, "build", "-ldflags=-s", "-o", target, "./"+actorDir)
 
 	if goos != "" {
 		cmd.Env = append(cmd.Environ(), "GOOS="+goos)
@@ -48,7 +48,7 @@ func build(gocmd, target, goos, goarch string) error {
 	return cmd.Run()
 }
 
-func transferAgent(host host) error {
+func transferActor(host host) error {
 	// TODO: suffixes for the transferred binary!
 	cmd := exec.Command("rsync", "-c", targetRemote, string(host)+(":"+targetShort))
 
@@ -95,7 +95,7 @@ func doRemote(host host, verb verb, tagsConcat string, printVars bool) error {
 }
 
 func run(a *action) error {
-	// here goes the code that compiles, sends and runs the agent
+	// here goes the code that compiles, sends and runs the actor
 
 	err := injectMain()
 	if err != nil {
@@ -107,18 +107,18 @@ func run(a *action) error {
 		return err
 	}
 
-	fmt.Println("= build local agent")
+	fmt.Println("= build local actor")
 	err = build(gocmd, targetLocal, "", "")
 	if err != nil {
 		return err
 	}
-	fmt.Println("= build remote agent")
+	fmt.Println("= build remote actor")
 	err = build(gocmd, targetRemote, os.Getenv("HOSTOS"), os.Getenv("HOSTARCH"))
 	if err != nil {
 		return err
 	}
-	fmt.Println("= transfer remote agent")
-	err = transferAgent(a.host)
+	fmt.Println("= transfer remote actor")
+	err = transferActor(a.host)
 	if err != nil {
 		return err
 	}
