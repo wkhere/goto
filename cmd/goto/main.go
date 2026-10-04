@@ -11,7 +11,7 @@ import (
 
 type action struct {
 	host       host
-	tagsConcat string
+	tagsConcat tags
 	printVars  bool
 	dryrun     bool
 
@@ -33,7 +33,7 @@ func parseArgs(args []string) (a action, _ error) {
 			a.dryrun = true
 
 		case p.MatchFlagExpr("-t", "--tags"):
-			a.tagsConcat = p.Val
+			a.tagsConcat = tags(p.Val)
 
 		case p.MatchJustFlag("-v", "--print-vars"):
 			a.printVars = true

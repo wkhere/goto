@@ -11,13 +11,23 @@ import (
 
 const (
 	actorDir     = "act"
-	targetLocal  = ".actor.local"
-	targetRemote = ".actor.remote"
-	targetShort  = ".actor"
+	targetPrefix = ".actor"
 )
 
-type host string
-type verb string
+type (
+	cmd    string
+	envv   string
+	host   string
+	target string
+	verb   string
+	tags   string
+)
+
+var envnil = envv("")
+
+func getenv(key string) envv { return envv(os.Getenv(key)) }
+
+func (t target) add(s string) target { return target(string(t) + s) }
 
 //go:embed actor_main.go.src
 var actorMain []byte
@@ -33,14 +43,14 @@ func injectMain() (err error) {
 	return err
 }
 
-func build(gocmd, target, goos, goarch string) error {
-	cmd := exec.Command(gocmd, "build", "-ldflags=-s", "-o", target, "./"+actorDir)
+func build(gocmd cmd, goos, goarch envv, target target) error {
+	cmd := exec.Command(string(gocmd), "build", "-ldflags=-s", "-o", string(target), "./"+actorDir)
 
 	if goos != "" {
-		cmd.Env = append(cmd.Environ(), "GOOS="+goos)
+		cmd.Env = append(cmd.Environ(), "GOOS="+string(goos))
 	}
 	if goarch != "" {
-		cmd.Env = append(cmd.Environ(), "GOARCH="+goarch)
+		cmd.Env = append(cmd.Environ(), "GOARCH="+string(goarch))
 	}
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -48,9 +58,8 @@ func build(gocmd, target, goos, goarch string) error {
 	return cmd.Run()
 }
 
-func transferActor(host host) error {
-	// TODO: suffixes for the transferred binary!
-	cmd := exec.Command("rsync", "-c", targetRemote, string(host)+(":"+targetShort))
+func transferActor(targetSrc, targetDst target, host host) error {
+	cmd := exec.Command("rsync", "-c", string(targetSrc), string(host)+(":"+string(targetDst)))
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -58,30 +67,30 @@ func transferActor(host host) error {
 	return cmd.Run()
 }
 
-func doLocal(host host, verb verb, tagsConcat string, printVars bool) error {
+func doLocal(target target, verb verb, tagsConcat tags, host host, printVars bool) error {
 
 	args := []string{string(verb), "-r", string(host)}
 
 	if tagsConcat != "" {
-		args = append(args, "-t", tagsConcat)
+		args = append(args, "-t", string(tagsConcat))
 	}
 	if printVars {
 		args = append(args, "-v")
 	}
 
-	cmd := exec.Command("./"+targetLocal, args...)
+	cmd := exec.Command("./"+string(target), args...)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
 	return cmd.Run()
 }
 
-func doRemote(host host, verb verb, tagsConcat string, printVars bool) error {
+func doRemote(host host, target target, verb verb, tagsConcat tags, printVars bool) error {
 
-	args := []string{string(host), "./" + targetShort, string(verb)}
+	args := []string{string(host), "./" + string(target), string(verb)}
 
 	if tagsConcat != "" {
-		args = append(args, "-t", tagsConcat)
+		args = append(args, "-t", string(tagsConcat))
 	}
 	if printVars {
 		args = append(args, "-v")
@@ -102,33 +111,40 @@ func run(a *action) error {
 		return fmt.Errorf("inject main: %w", err)
 	}
 
-	gocmd, err := exec.LookPath("go")
+	gocmdpath, err := exec.LookPath("go")
 	if err != nil {
 		return err
 	}
+	gocmd := cmd(gocmdpath)
+
+	hash, err := hashFromLocalWD()
+	if err != nil {
+		return err
+	}
+	target := target(targetPrefix + "-" + hash)
 
 	fmt.Println("= build local actor")
-	err = build(gocmd, targetLocal, "", "")
+	err = build(gocmd, envnil, envnil, target.add(".local"))
 	if err != nil {
 		return err
 	}
 	fmt.Println("= build remote actor")
-	err = build(gocmd, targetRemote, os.Getenv("HOSTOS"), os.Getenv("HOSTARCH"))
+	err = build(gocmd, getenv("HOSTOS"), getenv("HOSTARCH"), target.add(".remote"))
 	if err != nil {
 		return err
 	}
 	fmt.Println("= transfer remote actor")
-	err = transferActor(a.host)
+	err = transferActor(target.add(".remote"), target, a.host)
 	if err != nil {
 		return err
 	}
 	fmt.Println("")
 
-	err = doRemote(a.host, "prep", a.tagsConcat, a.printVars)
+	err = doRemote(a.host, target, "prep", a.tagsConcat, a.printVars)
 	if err != nil {
 		return err
 	}
-	err = doLocal(a.host, "transfer", a.tagsConcat, a.printVars)
+	err = doLocal(target.add(".local"), "transfer", a.tagsConcat, a.host, a.printVars)
 	if err != nil {
 		return err
 	}
@@ -136,7 +152,7 @@ func run(a *action) error {
 	if a.dryrun {
 		actverb = "view"
 	}
-	err = doRemote(a.host, actverb, a.tagsConcat, a.printVars)
+	err = doRemote(a.host, target, actverb, a.tagsConcat, a.printVars)
 	return err
 }
 
