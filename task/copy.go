@@ -402,5 +402,9 @@ func sizeFmt(size int64) string {
 		x = y
 		j++
 	}
-	return fmt.Sprintf("%.3f%s", x, units[j])
+	var prec = 3
+	if _, f := math.Modf(x); f == 0.0 {
+		prec = 0
+	}
+	return fmt.Sprintf("%.*f%s", prec, x, units[j])
 }
