@@ -1,6 +1,6 @@
 build:
 	go vet   ./...
-	go test  ./core
+	go test  ./core ./task
 	go build ./cmd/goto
 
 install:
