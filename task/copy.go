@@ -8,13 +8,13 @@ import (
 	"hash/fnv"
 	"io"
 	"io/fs"
+	"math"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 
 	"codeberg.org/wkhere/goto/core"
-	"git.sr.ht/~mariusor/sizefmt"
 )
 
 type Copy struct {
@@ -366,7 +366,7 @@ func parseRsyncStats(s string) (stats string, err error) {
 	if err != nil {
 		return "[invalid stats]", nil
 	}
-	stats = fmt.Sprintf("sent: %.3B, recv: %.3B", sizefmt.Size(sent), sizefmt.Size(recv))
+	stats = fmt.Sprintf("sent: %sB, recv: %sB", sizeFmt(sent), sizeFmt(recv))
 
 	if i := strings.Index(s, "total size is "); i >= 0 {
 		s = s[i:]
@@ -381,11 +381,26 @@ func parseRsyncStats(s string) (stats string, err error) {
 	if err != nil {
 		return stats, nil
 	}
-	stats += fmt.Sprintf(", total: %.3B", sizefmt.Size(total))
+	stats += fmt.Sprintf(", total: %sB", sizeFmt(total))
 	speedup, err = strconv.ParseFloat(r.Replace(buf2), 64)
 	if err != nil {
 		return stats, nil
 	}
 	stats += fmt.Sprintf(", speedup: %.2f", speedup)
 	return stats, nil
+}
+
+func sizeFmt(size int64) string {
+	units := []string{"", "Ki", "Mi", "Gi"}
+	var x = float64(size)
+	var j int
+	for {
+		y := x / 1024
+		if math.Abs(y) < 1 || j >= len(units) {
+			break
+		}
+		x = y
+		j++
+	}
+	return fmt.Sprintf("%.3f%s", x, units[j])
 }
