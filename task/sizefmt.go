@@ -11,7 +11,7 @@ func sizeFmt(size int64) string {
 	var j int
 	for {
 		y := x / 1024
-		if math.Abs(y) < 1 || j >= len(units) {
+		if math.Abs(y) < 1 || j == len(units)-1 {
 			break
 		}
 		x = y
