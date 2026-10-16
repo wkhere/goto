@@ -104,7 +104,6 @@ func doRemote(host host, target target, verb verb, tagsConcat tags, printVars bo
 }
 
 func run(a *action) error {
-	// here goes the code that compiles, sends and runs the actor
 
 	err := injectMain()
 	if err != nil {
