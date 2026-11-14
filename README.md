@@ -1,5 +1,8 @@
 ## goto
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/wkhere/goto.svg)](https://pkg.go.dev/github.com/wkhere/goto)
+
+
 _Goto considered harmless!_
 
 Goto is a minimal and fast CM/CI/CD tool (you name it).
