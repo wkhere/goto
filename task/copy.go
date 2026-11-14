@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"codeberg.org/wkhere/goto/core"
+	"github.com/wkhere/goto/core"
 )
 
 type Copy struct {

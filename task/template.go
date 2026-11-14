@@ -9,8 +9,8 @@ import (
 	"strings"
 	"text/template"
 
-	"codeberg.org/wkhere/goto/core"
 	"github.com/akedrou/textdiff"
+	"github.com/wkhere/goto/core"
 )
 
 type Template struct {

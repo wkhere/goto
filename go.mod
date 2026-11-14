@@ -1,4 +1,4 @@
-module codeberg.org/wkhere/goto
+module github.com/wkhere/goto
 
 go 1.25.0
 
