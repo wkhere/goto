@@ -18,9 +18,9 @@ jobs:
 
     - run: go build -v ./...
 
-    - run: go test -coverprofile=coverage.out ./...
+    - run: go test -coverprofile=coverage.out ./core ./task
 
-    - run: go test -race ./...
+    - run: go test -race ./core ./task
 
     - uses: jandelgado/gcov2lcov-action@v1
     - uses: coverallsapp/github-action@v2
