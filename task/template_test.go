@@ -192,6 +192,8 @@ func TestSimpleTemplate(t *testing.T) {
 	})
 
 	t.Run("Exec-nonexistent-dest", func(t *testing.T) {
+		wdiff := `+foo should be equal to foo`
+
 		changed, diff, _, err := task.Exec(varsDestNotExists)
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
@@ -199,8 +201,8 @@ func TestSimpleTemplate(t *testing.T) {
 		if !changed {
 			t.Error("expected changed=true")
 		}
-		if diff == "" {
-			t.Error("expected non-empty diff")
+		if !strings.Contains(diff, wdiff) {
+			t.Errorf("diff mismatch, have:\n%s", diff)
 		}
 	})
 
