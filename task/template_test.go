@@ -1,6 +1,7 @@
 package task
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -23,6 +24,11 @@ func TestSimpleTemplate(t *testing.T) {
 		t.Errorf("unexpected create-temp-dest error: %v", err)
 		return
 	}
+	destSt, err := dest.Stat()
+	if err != nil {
+		t.Errorf("unexpected stat-temp-dest error: %v", err)
+		return
+	}
 
 	_, err = io.WriteString(dest, "foo should be equal to foo\n")
 	if err != nil {
@@ -39,6 +45,7 @@ func TestSimpleTemplate(t *testing.T) {
 		Name:     "test template foo",
 		Template: MustParseTemplate(srcfs, fooTemplPath),
 		Dest:     `{{.MyDest}}`,
+		Mode:     destSt.Mode(),
 	}
 
 	vars := core.Vars{
@@ -100,6 +107,39 @@ func TestSimpleTemplate(t *testing.T) {
 		}
 	})
 
+	t.Run("View-mode-changed", func(t *testing.T) {
+		task2 := *task
+		task2.Mode = 0400
+		wdiff := fmt.Sprintf("--- mode: 0%o\n+++ mode: 0%o\n", task.Mode, task2.Mode)
+
+		changed, diff, _, err := task2.View(vars)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if !changed {
+			t.Error("expected changed=true")
+		}
+		if !strings.Contains(diff, wdiff) {
+			t.Errorf("diff mismatch, have:\n%s", diff)
+		}
+	})
+
+	t.Run("View-mode-zero", func(t *testing.T) {
+		task2 := *task
+		task2.Mode = 0
+
+		changed, diff, _, err := task2.View(vars)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if changed {
+			t.Error("expected changed=false")
+		}
+		if diff != "" {
+			t.Errorf("expected empty diff, have:\n%s", diff)
+		}
+	})
+
 	t.Run("View-nonexistent-dest", func(t *testing.T) {
 		changed, diff, _, err := task.View(varsDestNotExists(t))
 		if err != nil {
@@ -110,6 +150,23 @@ func TestSimpleTemplate(t *testing.T) {
 		}
 		if diff == "" {
 			t.Error("expected non-empty diff")
+		}
+	})
+
+	t.Run("View-nonexistent-dest-mode-zero", func(t *testing.T) {
+		task2 := *task
+		task2.Mode = 0
+		wdiff := `+foo should be equal to foo`
+
+		changed, diff, _, err := task2.View(varsDestNotExists(t))
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if !changed {
+			t.Error("expected changed=true")
+		}
+		if !strings.Contains(diff, wdiff) {
+			t.Errorf("diff mismatch, have:\n%s", diff)
 		}
 	})
 
@@ -194,10 +251,60 @@ func TestSimpleTemplate(t *testing.T) {
 		}
 	})
 
+	t.Run("Exec-mode-changed", func(t *testing.T) {
+		task2 := *task
+		task2.Mode = 0400
+		wdiff := fmt.Sprintf("--- mode: 0%o\n+++ mode: 0%o\n", task.Mode, task2.Mode)
+
+		changed, diff, _, err := task2.Exec(vars)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if !changed {
+			t.Error("expected changed=true")
+		}
+		if !strings.Contains(diff, wdiff) {
+			t.Errorf("diff mismatch, have:\n%s", diff)
+		}
+	})
+
+	t.Run("Exec-mode-zero", func(t *testing.T) {
+		task2 := *task
+		task2.Mode = 0
+
+		changed, diff, _, err := task2.Exec(vars)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if changed {
+			t.Error("expected changed=false")
+		}
+		if diff != "" {
+			t.Errorf("expected empty diff, have:\n%s", diff)
+		}
+	})
+
 	t.Run("Exec-nonexistent-dest", func(t *testing.T) {
 		wdiff := `+foo should be equal to foo`
 
 		changed, diff, _, err := task.Exec(varsDestNotExists(t))
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if !changed {
+			t.Error("expected changed=true")
+		}
+		if !strings.Contains(diff, wdiff) {
+			t.Errorf("diff mismatch, have:\n%s", diff)
+		}
+	})
+
+	t.Run("Exec-nonexistent-dest-mode-zero", func(t *testing.T) {
+		task2 := *task
+		task2.Mode = 0
+		wdiff := `+foo should be equal to foo`
+
+		changed, diff, _, err := task2.Exec(varsDestNotExists(t))
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
