@@ -1,1 +1,2 @@
 + per-task Vars
+- switch to errors.AsType when the minimum Go is 1.26.0
