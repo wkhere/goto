@@ -189,6 +189,23 @@ func TestSimpleTemplate(t *testing.T) {
 		}
 	})
 
+	t.Run("View-dest-file-subpath", func(t *testing.T) {
+		task2 := *task
+		task2.Dest = filepath.Join(dest.Name(), "x")
+		werr := "not a directory"
+
+		changed, diff, _, err := task2.View(vars)
+		if err == nil || !strings.Contains(err.Error(), werr) {
+			t.Errorf("expected error with `%s`; have: %v", werr, err)
+		}
+		if changed {
+			t.Error("expected changed=false")
+		}
+		if diff != "" {
+			t.Error("expected empty diff")
+		}
+	})
+
 	t.Run("View-empty-dest-dir", func(t *testing.T) {
 		task2 := *task
 		task2.Dest = `foo`
@@ -322,6 +339,23 @@ func TestSimpleTemplate(t *testing.T) {
 		task2 := *task
 		task2.Dest = `{{.Bad}}`
 		werr := "undefined var Bad"
+
+		changed, diff, _, err := task2.Exec(vars)
+		if err == nil || !strings.Contains(err.Error(), werr) {
+			t.Errorf("expected error with `%s`; have: %v", werr, err)
+		}
+		if changed {
+			t.Error("expected changed=false")
+		}
+		if diff != "" {
+			t.Error("expected empty diff")
+		}
+	})
+
+	t.Run("Exec-dest-file-subpath", func(t *testing.T) {
+		task2 := *task
+		task2.Dest = filepath.Join(dest.Name(), "x")
+		werr := "not a directory"
 
 		changed, diff, _, err := task2.Exec(vars)
 		if err == nil || !strings.Contains(err.Error(), werr) {
