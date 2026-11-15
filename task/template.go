@@ -103,8 +103,13 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string, notify []cor
 	var newContent string
 	err = t.evalTo(&newContent, newFile, vars)
 	if err != nil {
+		err = fmt.Errorf("eval new content: %w", err)
 		newFile.Close()
-		return false, "", nil, fmt.Errorf("eval new content: %w", err)
+		rmerr := os.Remove(newPath)
+		if rmerr != nil {
+			err = errors.Join(err, fmt.Errorf("remove tmp file: %w", rmerr))
+		}
+		return false, "", nil, err
 	}
 
 	diff = textdiff.Unified(dest, newPath, oldContent, newContent)

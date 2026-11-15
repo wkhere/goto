@@ -1,8 +1,10 @@
 package task
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -368,4 +370,45 @@ func TestSimpleTemplate(t *testing.T) {
 			t.Error("expected empty diff")
 		}
 	})
+}
+
+func TestTemplateTmpCleanup(t *testing.T) {
+	srcfs := fstest.MapFS{
+		"good.t": {Data: []byte("foo should be equal to {{.Foo}}\n")},
+		"bad.t":  {Data: []byte("{{.Foo.NoSuchField}}\n")},
+	}
+	dest := filepath.Join(t.TempDir(), "dest")
+	vars := core.Vars{"Foo": "foo"}
+
+	bad := &Template{
+		Name:     "bad template",
+		Template: MustParseTemplate(srcfs, "bad.t"),
+		Dest:     dest,
+	}
+	good := &Template{
+		Name:     "good template",
+		Template: MustParseTemplate(srcfs, "good.t"),
+		Dest:     dest,
+	}
+
+	_, _, _, err := bad.Exec(vars)
+	if err == nil {
+		t.Fatal("expected eval error")
+	}
+
+	tmp, err := tmpPath(dest)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if _, err := os.Lstat(tmp); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("tmp file left behind after failed exec: %s", tmp)
+	}
+
+	changed, _, _, err := good.Exec(vars)
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	if !changed {
+		t.Error("expected changed=true")
+	}
 }
