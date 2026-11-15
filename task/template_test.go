@@ -16,9 +16,11 @@ import (
 
 func TestSimpleTemplate(t *testing.T) {
 	const fooTemplPath = "foo.t"
+	const badTemplPath = "bad.t"
 
 	srcfs := fstest.MapFS{
 		fooTemplPath: {Data: []byte("foo should be equal to {{.Foo}}\n")},
+		badTemplPath: {Data: []byte("{{.Foo.NoSuchField}}\n")},
 	}
 
 	dest, err := os.CreateTemp(t.TempDir(), "*")
@@ -189,6 +191,23 @@ func TestSimpleTemplate(t *testing.T) {
 		}
 	})
 
+	t.Run("View-broken-template", func(t *testing.T) {
+		task2 := *task
+		task2.Template = MustParseTemplate(srcfs, badTemplPath)
+		werr := "eval new content"
+
+		changed, diff, _, err := task2.View(vars)
+		if err == nil || !strings.Contains(err.Error(), werr) {
+			t.Errorf("expected error with `%s`; have: %v", werr, err)
+		}
+		if changed {
+			t.Error("expected changed=false")
+		}
+		if diff != "" {
+			t.Error("expected empty diff")
+		}
+	})
+
 	t.Run("View-dest-file-subpath", func(t *testing.T) {
 		task2 := *task
 		task2.Dest = filepath.Join(dest.Name(), "x")
@@ -339,6 +358,23 @@ func TestSimpleTemplate(t *testing.T) {
 		task2 := *task
 		task2.Dest = `{{.Bad}}`
 		werr := "undefined var Bad"
+
+		changed, diff, _, err := task2.Exec(vars)
+		if err == nil || !strings.Contains(err.Error(), werr) {
+			t.Errorf("expected error with `%s`; have: %v", werr, err)
+		}
+		if changed {
+			t.Error("expected changed=false")
+		}
+		if diff != "" {
+			t.Error("expected empty diff")
+		}
+	})
+
+	t.Run("Exec-broken-template", func(t *testing.T) {
+		task2 := *task
+		task2.Template = MustParseTemplate(srcfs, badTemplPath)
+		werr := "eval new content"
 
 		changed, diff, _, err := task2.Exec(vars)
 		if err == nil || !strings.Contains(err.Error(), werr) {
