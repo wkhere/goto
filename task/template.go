@@ -95,6 +95,10 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string, notify []cor
 	if err != nil {
 		return false, "", nil, fmt.Errorf("create tmp path: %w", err)
 	}
+	err = os.Remove(newPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return false, "", nil, fmt.Errorf("remove stale tmp file: %w", err)
+	}
 	newFile, err := os.OpenFile(newPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, newMode)
 	if err != nil {
 		return false, "", nil, fmt.Errorf("create tmp file: %w", err)

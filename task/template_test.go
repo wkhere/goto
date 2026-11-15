@@ -536,3 +536,61 @@ func TestTemplateTmpCleanup(t *testing.T) {
 		checkCleanup(t, dest)
 	})
 }
+
+func TestTemplateStaleTmp(t *testing.T) {
+	srcfs := fstest.MapFS{
+		"foo.t": {Data: []byte("foo should be equal to {{.Foo}}\n")},
+	}
+	dest := filepath.Join(t.TempDir(), "dest")
+
+	const (
+		destMode  = 0644
+		staleMode = 0600
+	)
+
+	tmp, err := tmpPath(dest)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	stale := strings.Repeat("stale content from a killed run\n", 10)
+
+	err = os.WriteFile(tmp, []byte(stale), staleMode)
+	if err != nil {
+		t.Fatalf("unexpected write error: %v", err)
+	}
+
+	task := &Template{
+		Name:     "foo template",
+		Template: MustParseTemplate(srcfs, "foo.t"),
+		Dest:     dest,
+		Mode:     destMode,
+	}
+
+	changed, _, _, err := task.Exec(core.Vars{"Foo": "foo"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !changed {
+		t.Error("expected changed=true")
+	}
+
+	b, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatalf("unexpected read error: %v", err)
+	}
+	if want := "foo should be equal to foo\n"; string(b) != want {
+		t.Errorf("dest content mismatch, have:\n%s", b)
+	}
+
+	st, err := os.Stat(dest)
+	if err != nil {
+		t.Fatalf("unexpected stat error: %v", err)
+	}
+	if st.Mode() != destMode {
+		t.Errorf("expected dest mode 0%o, have 0%o", destMode, st.Mode())
+	}
+
+	if _, err := os.Lstat(tmp); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("tmp file left behind: %s", tmp)
+	}
+}
