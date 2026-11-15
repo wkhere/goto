@@ -12,8 +12,10 @@ import (
 )
 
 func TestSimpleTemplate(t *testing.T) {
+	const fooTemplPath = "foo.t"
+
 	srcfs := fstest.MapFS{
-		"foo.t": {Data: []byte("foo should be equal to {{.Foo}}\n")},
+		fooTemplPath: {Data: []byte("foo should be equal to {{.Foo}}\n")},
 	}
 
 	dest, err := os.CreateTemp(t.TempDir(), "*")
@@ -35,7 +37,7 @@ func TestSimpleTemplate(t *testing.T) {
 
 	task := &Template{
 		Name:     "test template foo",
-		Template: MustParseTemplate(srcfs, "foo.t"),
+		Template: MustParseTemplate(srcfs, fooTemplPath),
 		Dest:     `{{.MyDest}}`,
 	}
 
