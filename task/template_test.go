@@ -54,12 +54,15 @@ func TestSimpleTemplate(t *testing.T) {
 		return
 	}
 
-	varsDestNotExists, err := vars.Eval(nil, core.Vars{
-		"MyDest": filepath.Join(filepath.Dir(dest.Name()), "nonexistent"),
-	})
-	if err != nil {
-		t.Errorf("unexpected eval error: %v", err)
-		return
+	varsDestNotExists := func(t *testing.T) core.Vars {
+		t.Helper()
+		vv, err := vars.Eval(nil, core.Vars{
+			"MyDest": filepath.Join(t.TempDir(), "nonexistent"),
+		})
+		if err != nil {
+			t.Fatalf("unexpected eval error: %v", err)
+		}
+		return vv
 	}
 
 	t.Run("Desc", func(t *testing.T) {
@@ -98,7 +101,7 @@ func TestSimpleTemplate(t *testing.T) {
 	})
 
 	t.Run("View-nonexistent-dest", func(t *testing.T) {
-		changed, diff, _, err := task.View(varsDestNotExists)
+		changed, diff, _, err := task.View(varsDestNotExists(t))
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
@@ -194,7 +197,7 @@ func TestSimpleTemplate(t *testing.T) {
 	t.Run("Exec-nonexistent-dest", func(t *testing.T) {
 		wdiff := `+foo should be equal to foo`
 
-		changed, diff, _, err := task.Exec(varsDestNotExists)
+		changed, diff, _, err := task.Exec(varsDestNotExists(t))
 		if err != nil {
 			t.Errorf("unexpected error: %v", err)
 		}
