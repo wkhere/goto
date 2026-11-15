@@ -99,17 +99,24 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string, notify []cor
 	if err != nil {
 		return false, "", nil, fmt.Errorf("create tmp file: %w", err)
 	}
+	var newRenamed bool
 
-	var newContent string
-	err = t.evalTo(&newContent, newFile, vars)
-	if err != nil {
-		err = fmt.Errorf("eval new content: %w", err)
-		newFile.Close()
+	defer func() {
+		if newRenamed {
+			return
+		}
 		rmerr := os.Remove(newPath)
 		if rmerr != nil {
 			err = errors.Join(err, fmt.Errorf("remove tmp file: %w", rmerr))
 		}
-		return false, "", nil, err
+	}()
+
+	var newContent string
+
+	err = t.evalTo(&newContent, newFile, vars)
+	if err != nil {
+		newFile.Close()
+		return false, "", nil, fmt.Errorf("eval new content: %w", err)
 	}
 
 	diff = textdiff.Unified(dest, newPath, oldContent, newContent)
@@ -121,10 +128,6 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string, notify []cor
 	}
 
 	if !changed {
-		err = os.Remove(newPath)
-		if err != nil {
-			err = fmt.Errorf("remove tmp file: %w", err)
-		}
 		goto compareMode
 	}
 
@@ -139,6 +142,7 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string, notify []cor
 		// todo: try to rename back the original from backup
 		return changed, diff, nil, fmt.Errorf("overwrite dest: %w", err)
 	}
+	newRenamed = true
 
 compareMode:
 	if oldExists {

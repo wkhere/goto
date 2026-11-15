@@ -475,38 +475,64 @@ func TestTemplateTmpCleanup(t *testing.T) {
 		"good.t": {Data: []byte("foo should be equal to {{.Foo}}\n")},
 		"bad.t":  {Data: []byte("{{.Foo.NoSuchField}}\n")},
 	}
-	dest := filepath.Join(t.TempDir(), "dest")
+	goodTempl := MustParseTemplate(srcfs, "good.t")
+	badTempl := MustParseTemplate(srcfs, "bad.t")
 	vars := core.Vars{"Foo": "foo"}
 
-	bad := &Template{
-		Name:     "bad template",
-		Template: MustParseTemplate(srcfs, "bad.t"),
-		Dest:     dest,
-	}
-	good := &Template{
-		Name:     "good template",
-		Template: MustParseTemplate(srcfs, "good.t"),
-		Dest:     dest,
+	// checkCleanup checks that a failed exec left no tmp file behind
+	// and that the next exec on the same dest works.
+	checkCleanup := func(t *testing.T, dest string) {
+		t.Helper()
+
+		tmp, err := tmpPath(dest)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if _, err := os.Lstat(tmp); !errors.Is(err, fs.ErrNotExist) {
+			t.Errorf("tmp file left behind after failed exec: %s", tmp)
+		}
+
+		good := &Template{Name: "good template", Template: goodTempl, Dest: dest}
+		changed, _, _, err := good.Exec(vars)
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		if !changed {
+			t.Error("expected changed=true")
+		}
 	}
 
-	_, _, _, err := bad.Exec(vars)
-	if err == nil {
-		t.Fatal("expected eval error")
-	}
+	t.Run("eval-error", func(t *testing.T) {
+		dest := filepath.Join(t.TempDir(), "dest")
+		bad := &Template{Name: "bad template", Template: badTempl, Dest: dest}
 
-	tmp, err := tmpPath(dest)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if _, err := os.Lstat(tmp); !errors.Is(err, fs.ErrNotExist) {
-		t.Errorf("tmp file left behind after failed exec: %s", tmp)
-	}
+		_, _, _, err := bad.Exec(vars)
+		if werr := "eval new content"; err == nil || !strings.Contains(err.Error(), werr) {
+			t.Fatalf("expected error with `%s`; have: %v", werr, err)
+		}
+		checkCleanup(t, dest)
+	})
 
-	changed, _, _, err := good.Exec(vars)
-	if err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-	if !changed {
-		t.Error("expected changed=true")
-	}
+	t.Run("backup-blocked-by-dir", func(t *testing.T) {
+		dest := filepath.Join(t.TempDir(), "dest")
+		err := os.WriteFile(dest, []byte("old content\n"), 0644)
+		if err != nil {
+			t.Fatalf("unexpected write error: %v", err)
+		}
+		err = os.Mkdir(dest+"~", 0755)
+		if err != nil {
+			t.Fatalf("unexpected mkdir error: %v", err)
+		}
+		good := &Template{Name: "good template", Template: goodTempl, Dest: dest}
+
+		_, _, _, err = good.Exec(vars)
+		if werr := "backup dest"; err == nil || !strings.Contains(err.Error(), werr) {
+			t.Fatalf("expected error with `%s`; have: %v", werr, err)
+		}
+		err = os.Remove(dest + "~")
+		if err != nil {
+			t.Fatalf("unexpected remove error: %v", err)
+		}
+		checkCleanup(t, dest)
+	})
 }
