@@ -41,7 +41,10 @@ func TestSimpleTemplate(t *testing.T) {
 		Dest:     `{{.MyDest}}`,
 	}
 
-	vars := core.Vars{"Foo": "foo", "MyDest": dest.Name()}
+	vars := core.Vars{
+		"Foo":    "foo",
+		"MyDest": dest.Name(),
+	}
 
 	varsContentChanged, err := vars.Eval(nil, core.Vars{
 		"Foo": "quux",
