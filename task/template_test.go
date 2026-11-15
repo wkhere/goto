@@ -405,6 +405,34 @@ func TestSimpleTemplate(t *testing.T) {
 		}
 	})
 
+	t.Run("Exec-backup-blocked-by-dir", func(t *testing.T) {
+		const oldContent = "old content\n"
+		dest2 := filepath.Join(t.TempDir(), "dest")
+		err := os.WriteFile(dest2, []byte(oldContent), 0644)
+		if err != nil {
+			t.Fatalf("unexpected write error: %v", err)
+		}
+		err = os.Mkdir(dest2+"~", 0755)
+		if err != nil {
+			t.Fatalf("unexpected mkdir error: %v", err)
+		}
+		task2 := *task
+		task2.Dest = dest2
+		werr := "backup dest"
+
+		_, _, _, err = task2.Exec(vars)
+		if err == nil || !strings.Contains(err.Error(), werr) {
+			t.Errorf("expected error with `%s`; have: %v", werr, err)
+		}
+		b, err := os.ReadFile(dest2)
+		if err != nil {
+			t.Fatalf("unexpected read error: %v", err)
+		}
+		if string(b) != oldContent {
+			t.Errorf("expected dest untouched, have:\n%s", b)
+		}
+	})
+
 	t.Run("Exec-empty-dest-dir", func(t *testing.T) {
 		task2 := *task
 		task2.Dest = `foo`
