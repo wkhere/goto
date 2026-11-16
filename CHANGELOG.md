@@ -1,3 +1,8 @@
+* Template fixes:
+  * back up dest with a hard link
+  * remove stale tmp file from an earlier run
+  * remove tmp file on any exec failure
+  * cleanup tmp file after failed exec
 * Template tests
 * migrate to github; use github actions
 * use own sizefmt
