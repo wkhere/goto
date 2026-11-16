@@ -136,14 +136,18 @@ func (t *Template) Exec(vars core.Vars) (changed bool, diff string, notify []cor
 	}
 
 	if oldExists {
-		err = os.Rename(dest, dest+"~")
+		backup := dest + "~"
+		err = os.Remove(backup)
+		if err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return changed, diff, nil, fmt.Errorf("remove old backup: %w", err)
+		}
+		err = os.Link(dest, backup)
 		if err != nil {
 			return changed, diff, nil, fmt.Errorf("backup dest: %w", err)
 		}
 	}
 	err = os.Rename(newPath, dest)
 	if err != nil {
-		// todo: try to rename back the original from backup
 		return changed, diff, nil, fmt.Errorf("overwrite dest: %w", err)
 	}
 	newRenamed = true

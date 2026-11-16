@@ -464,13 +464,19 @@ func TestSimpleTemplate(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected write error: %v", err)
 		}
+		// os.Remove would delete an empty dir, so put a file inside
 		err = os.Mkdir(dest2+"~", 0755)
 		if err != nil {
 			t.Fatalf("unexpected mkdir error: %v", err)
 		}
+		err = os.WriteFile(filepath.Join(dest2+"~", "f"), nil, 0644)
+		if err != nil {
+			t.Fatalf("unexpected write error: %v", err)
+		}
+
 		task2 := *task
 		task2.Dest = dest2
-		werr := "backup dest"
+		werr := "remove old backup"
 
 		_, _, _, err = task2.Exec(vars)
 		if err == nil || !strings.Contains(err.Error(), werr) {
@@ -571,17 +577,22 @@ func TestTemplateTmpCleanup(t *testing.T) {
 		if err != nil {
 			t.Fatalf("unexpected write error: %v", err)
 		}
+		// os.Remove would delete an empty dir, so put a file inside
 		err = os.Mkdir(dest+"~", 0755)
 		if err != nil {
 			t.Fatalf("unexpected mkdir error: %v", err)
 		}
+		err = os.WriteFile(filepath.Join(dest+"~", "f"), nil, 0644)
+		if err != nil {
+			t.Fatalf("unexpected write error: %v", err)
+		}
 		good := &Template{Name: "good template", Template: goodTempl, Dest: dest}
 
 		_, _, _, err = good.Exec(vars)
-		if werr := "backup dest"; err == nil || !strings.Contains(err.Error(), werr) {
+		if werr := "remove old backup"; err == nil || !strings.Contains(err.Error(), werr) {
 			t.Fatalf("expected error with `%s`; have: %v", werr, err)
 		}
-		err = os.Remove(dest + "~")
+		err = os.RemoveAll(dest + "~")
 		if err != nil {
 			t.Fatalf("unexpected remove error: %v", err)
 		}
