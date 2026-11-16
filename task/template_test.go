@@ -405,6 +405,26 @@ func TestSimpleTemplate(t *testing.T) {
 		}
 	})
 
+	t.Run("Exec-missing-dest-dir", func(t *testing.T) {
+		task2 := *task
+		task2.Dest = filepath.Join(t.TempDir(), "nodir", "dest")
+		werr := "create tmp file"
+
+		changed, diff, _, err := task2.Exec(vars)
+		if err == nil || !strings.Contains(err.Error(), werr) {
+			t.Errorf("expected error with `%s`; have: %v", werr, err)
+		}
+		if !errors.Is(err, fs.ErrNotExist) {
+			t.Errorf("expected error wrapping fs.ErrNotExist; have: %v", err)
+		}
+		if changed {
+			t.Error("expected changed=false")
+		}
+		if diff != "" {
+			t.Error("expected empty diff")
+		}
+	})
+
 	t.Run("Exec-backup-blocked-by-dir", func(t *testing.T) {
 		const oldContent = "old content\n"
 		dest2 := filepath.Join(t.TempDir(), "dest")
