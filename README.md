@@ -1,5 +1,6 @@
 ## goto
 
+![cool stuff](http://img.shields.io/badge/cool-stuff-50a0ff.svg)
 [![Go Reference](https://pkg.go.dev/badge/github.com/wkhere/goto.svg)](https://pkg.go.dev/github.com/wkhere/goto)
 
 
